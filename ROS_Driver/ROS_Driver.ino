@@ -120,7 +120,7 @@ void setup() {
     screenLine_0 = "UGV Beast";
   } 
   
-  screenLine_1 = "version: 0.90";
+  screenLine_1 = "version: 0.93";
   screenLine_2 = "starting...";
   screenLine_3 = "";
   oled_update();

@@ -13,17 +13,24 @@ sensors_event_t temp;
 // float  icm_temp;
 // unsigned long last_imu_update = 0;
 
-SimpleKalmanFilter	kf_ax(0.5, 1, 0.1);
-SimpleKalmanFilter	kf_ay(0.5, 1, 0.1);
-SimpleKalmanFilter	kf_az(0.5, 1, 0.1);
 
-SimpleKalmanFilter	kf_mx(0.5, 1, 0.1);
-SimpleKalmanFilter	kf_my(0.5, 1, 0.1);
-SimpleKalmanFilter	kf_mz(0.5, 1, 0.1);
 
-SimpleKalmanFilter	kf_gx(0.5, 1, 0.1);
-SimpleKalmanFilter	kf_gy(0.5, 1, 0.1);
-SimpleKalmanFilter	kf_gz(0.5, 1, 0.1);
+
+// SimpleKalmanFilter	kf_ax(0.5, 1, 0.1);
+// SimpleKalmanFilter	kf_ay(0.5, 1, 0.1);
+// SimpleKalmanFilter	kf_az(0.5, 1, 0.1);
+
+// SimpleKalmanFilter	kf_mx(0.5, 1, 0.1);
+// SimpleKalmanFilter	kf_my(0.5, 1, 0.1);
+// SimpleKalmanFilter	kf_mz(0.5, 1, 0.1);
+
+// SimpleKalmanFilter	kf_gx(0.5, 1, 0.1);
+// SimpleKalmanFilter	kf_gy(0.5, 1, 0.1);
+// SimpleKalmanFilter	kf_gz(0.5, 1, 0.1);
+
+
+
+
 
 // SimpleKalmanFilter	kf_yaw(1, 1, 0.01);
 
@@ -138,64 +145,29 @@ void imu_init() {
 }
 
 
-void updateEulerAngles(float accelX, float accelY, float accelZ, float magX, float magY, float magZ, float gyroX, float gyroY, float gyroZ, float dt) {
-    // get pitch
-    icm_pitch = atan2(accelX, sqrt(accelY * accelY + accelZ * accelZ)) * DEG2ANG;
-    
-    // get roll
-    icm_roll = atan2(accelY, accelZ) * DEG2ANG;
-    
-    // get yaw
-    // Y X
-    float heading = atan2(magY, magX);
-    // icm_yaw = kf_yaw.updateEstimate((heading + gyroZ * dt/1000) * DEG2ANG);
-    // icm_yaw = kf_yaw.updateEstimate((heading) * DEG2ANG);
-    // icm_yaw = icm_yaw + kf_yaw.updateEstimate((gyroZ * dt/1000) * DEG2ANG);
-}
-
-
 void updateIMUData() {
-	//  /* Get a new normalized sensor event */
 	icm.getEvent(&accel, &gyro, &temp, &mag);
 
-	ax = kf_ax.updateEstimate(accel.acceleration.x);
-	ay = kf_ay.updateEstimate(accel.acceleration.y);
-	az = kf_az.updateEstimate(accel.acceleration.z);
+	ax = accel.acceleration.x;
+	ay = accel.acceleration.y;
+	az = accel.acceleration.z;
 
-	mx = kf_mx.updateEstimate(mag.magnetic.x);
-	my = kf_my.updateEstimate(mag.magnetic.y);
-	mz = kf_mz.updateEstimate(mag.magnetic.z);
+	mx = mag.magnetic.x;
+	my = mag.magnetic.y;
+	mz = mag.magnetic.z;
 
-	gx = kf_gx.updateEstimate(gyro.gyro.x);
-	gy = kf_gy.updateEstimate(gyro.gyro.y);
-	gz = kf_gz.updateEstimate(gyro.gyro.z);
+	gx = gyro.gyro.x;
+	gy = gyro.gyro.y;
+	gz = gyro.gyro.z;
 
-	// ax = accel.acceleration.x;
-	// ay = accel.acceleration.y;
-	// az = accel.acceleration.z;
+	double dt = (millis() - last_imu_update) / 1000.0;
+	last_imu_update = millis();
 
-	// mx = mag.magnetic.x;
-	// my = mag.magnetic.y;
-	// mz = mag.magnetic.z;
-
-	// gx = gyro.gyro.x;
-	// gy = gyro.gyro.y;
-	// gz = gyro.gyro.z;
-
-	if (last_imu_update == 0) {
-		updateEulerAngles(ax, ay, az, 
-						  mx, my, mz,
-						  gx, gy, gz,
-						  0);
-		last_imu_update = millis();
-	} else {
-		updateEulerAngles(ax, ay, az, 
-						  mx, my, mz,
-						  gx, gy, gz,
-						  (millis() - last_imu_update));
-		last_imu_update = millis();
-	}
+	icm_pitch = icm_pitch - gy * dt;
+	icm_roll = icm_roll + gx * dt;
+	icm_yaw = icm_yaw + gz * dt;
 }
+
 
 void imuUpdate_threading( void * parameter) {
 	while (true) {

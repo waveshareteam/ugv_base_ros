@@ -150,6 +150,7 @@ void initEncoders() {
   encoderB.setCount(0);
 }
 
+// plusesRate = 3.14159265359 * WHEEL_D / ONE_CIRCLE_PLUSES;
 void getWheelSpeed() {
   unsigned long currentTime = micros();
   long encoderPulsesA = encoderA.getCount();
@@ -172,8 +173,10 @@ void getLeftSpeed() {
   long encoderPulsesA = encoderA.getCount();
   if (!SET_MOTOR_DIR) {
     speedGetA = (plusesRate * (encoderPulsesA - lastEncoderA)) / ((double)(currentTime - lastLeftSpdTime) / 1000000);
+    en_odom_l = ((float)encoderPulsesA / ONE_CIRCLE_PLUSES) * WHEEL_D * 3.14159265359;
   } else {
     speedGetA = (plusesRate * (lastEncoderA - encoderPulsesA)) / ((double)(currentTime - lastLeftSpdTime) / 1000000);
+    en_odom_l = - ((float)encoderPulsesA / ONE_CIRCLE_PLUSES) * WHEEL_D * 3.14159265359;
   }
   lastEncoderA = encoderPulsesA;
   lastLeftSpdTime = currentTime;
@@ -184,8 +187,10 @@ void getRightSpeed() {
   long encoderPulsesB = encoderB.getCount();
   if (!SET_MOTOR_DIR) {
     speedGetB = (plusesRate * (encoderPulsesB - lastEncoderB)) / ((double)(currentTime - lastRightSpdTime) / 1000000);
+    en_odom_r = ((float)encoderPulsesB / ONE_CIRCLE_PLUSES) * WHEEL_D * 3.14159265359;
   } else {
     speedGetB = (plusesRate * (lastEncoderB - encoderPulsesB)) / ((double)(currentTime - lastRightSpdTime) / 1000000);
+    en_odom_r = - ((float)encoderPulsesB / ONE_CIRCLE_PLUSES) * WHEEL_D * 3.14159265359;
   }
   lastEncoderB = encoderPulsesB;
   lastRightSpdTime = currentTime;
@@ -419,7 +424,7 @@ void mm_settings(byte inputMain, byte inputModule) {
     SET_MOTOR_DIR = false;
   } else if (mainType == 2) {
     WHEEL_D = 0.0800;
-    ONE_CIRCLE_PLUSES = 1650;
+    ONE_CIRCLE_PLUSES = 660;
     TRACK_WIDTH = 0.172;
     SET_MOTOR_DIR = false;
   } else if (mainType == 3) {

@@ -35,7 +35,7 @@ bool runNewJsonCmd = false;
 // 1: RaspRover
 // 2: UGV Rover
 // 3: UGV Beast
-byte mainType = 1;
+byte mainType = 2;
 
 // 0: [Base default] without RoArm-M2 and gimbal.
 // 1: [RoArm default] RoArm-M2 mounted on the UGV.
@@ -332,7 +332,7 @@ float windup_limits = 255;
 
 // mainType:02 UGV Rover
 // #define WHEEL_D 0.0800
-// #define ONE_CIRCLE_PLUSES	1650
+// #define ONE_CIRCLE_PLUSES	660
 // #define TRACK_WIDTH	0.172
 // #define SET_MOTOR_DIR false
 
@@ -343,7 +343,7 @@ float windup_limits = 255;
 // #define SET_MOTOR_DIR true
 
 double WHEEL_D = 0.0800;
-int ONE_CIRCLE_PLUSES = 1650;
+int ONE_CIRCLE_PLUSES = 660;
 double TRACK_WIDTH = 0.172;
 bool SET_MOTOR_DIR = false;
 
@@ -369,10 +369,17 @@ unsigned long lastCmdRecvTime = millis();
 
 
 // --- --- --- ugv imu --- --- ---
-double icm_pitch, icm_roll, icm_yaw, icm_temp;
+double icm_pitch = 0;
+double icm_roll = 0;
+double icm_yaw = 0;
+float icm_temp;
 unsigned long last_imu_update = 0;
 
 double qw, qx, qy, qz;
 double ax, ay, az;
 double mx, my, mz;
 double gx, gy, gz;
+
+double en_odom_l, en_odom_r;
+
+unsigned long imu_last_time = micros();
