@@ -62,10 +62,9 @@ void oledInfoUpdate() {
   if (!screenDefaultMode) {
     return;
   }
-  // inaDataUpdate();
-  screenLine_3 = "V:"+String(loadVoltage_V);
+
+  screenLine_3 = "V:"+String(loadVoltage_V) + " s " +String(mainType) + String(moduleType);
   oled_update();
-  
 }
 
 // oled ctrl.

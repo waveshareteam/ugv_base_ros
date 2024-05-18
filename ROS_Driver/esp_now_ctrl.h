@@ -90,8 +90,6 @@ void changeEspNowMode(byte inputMode) {
 // callback when data is sent
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   char macStr[18];
-  // Serial.print("Packet to: ");
-  // Copies the sender mac address to a string
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
 
@@ -142,10 +140,6 @@ void OnDataRecv(const unsigned char* mac, const unsigned char* incomingData, int
     }
   }
 
-  // if (InfoPrint == 1) {
-  //   Serial.print("Bytes received: ");Serial.println(len);
-  // }
-
   switch(espNowMegsRecv.cmd) {
     case 0: {
       RoArmM2_allJointAbsCtrl(espNowMegsRecv.base,
@@ -173,7 +167,6 @@ void OnDataRecv(const unsigned char* mac, const unsigned char* incomingData, int
 
 void initEspNow() {
   if (esp_now_init() != ESP_OK) {
-    // Serial.println("Error initializing ESP-NOW");
     jsonInfoHttp.clear();
     jsonInfoHttp["T"] = CMD_ESP_NOW_SEND;
     jsonInfoHttp["status"] = 2;
@@ -199,7 +192,6 @@ void initEspNow() {
 
 void registerNewFollowerToPeer(String inputMac) {
   if (inputMac.length() != 17) {
-    // Serial.println("invalid MAC address format.");
     jsonInfoHttp.clear();
     jsonInfoHttp["T"] = CMD_ESP_NOW_SEND;
     jsonInfoHttp["status"] = 3;
@@ -218,7 +210,6 @@ void registerNewFollowerToPeer(String inputMac) {
   }
   memcpy(peerInfo.peer_addr, macArray, 6);
   if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-    // Serial.println("Failed to add peer: " + inputMac);
     jsonInfoHttp.clear();
     jsonInfoHttp["T"] = CMD_ESP_NOW_SEND;
     jsonInfoHttp["status"] = 4;
@@ -230,7 +221,6 @@ void registerNewFollowerToPeer(String inputMac) {
     Serial.println(getInfoJsonString);
     return;
   }
-  // Serial.println("add peer: " + inputMac);
   jsonInfoHttp.clear();
   jsonInfoHttp["T"] = CMD_ESP_NOW_SEND;
   jsonInfoHttp["status"] = 5;
@@ -245,7 +235,6 @@ void registerNewFollowerToPeer(String inputMac) {
 
 void deleteFollower(String inputMac) {
   if (inputMac.length() != 17) {
-    // Serial.println("invalid MAC address format.");
     jsonInfoHttp.clear();
     jsonInfoHttp["T"] = CMD_ESP_NOW_SEND;
     jsonInfoHttp["status"] = 3;
@@ -270,10 +259,6 @@ void deleteFollower(String inputMac) {
   String getInfoJsonString;
   serializeJson(jsonInfoHttp, getInfoJsonString);
   Serial.println(getInfoJsonString);
-
-  // if (InfoPrint == 1) {
-  //   Serial.println("delete peer: " + inputMac);
-  // }
 }
 
 
@@ -287,12 +272,6 @@ void espNowGroupSend(byte devCodeIn, float bIn, float sIn, float eIn, float hIn,
   strcpy(espNowMessage.message, messageIn.c_str());
 
   esp_err_t result = esp_now_send(0, (uint8_t *) &espNowMessage, sizeof(struct_message));
-  // if (result == ESP_OK) {
-  //   Serial.println("Sent with success");
-  // }
-  // else {
-  //   Serial.println("Error sending the data");
-  // }
   jsonInfoHttp.clear();
   jsonInfoHttp["T"] = CMD_ESP_NOW_SEND;
   jsonInfoHttp["status"] = (result == ESP_OK ? 8 : 7);
@@ -306,7 +285,6 @@ void espNowGroupSend(byte devCodeIn, float bIn, float sIn, float eIn, float hIn,
 
 void espNowSingleDevSend(String inputMac, byte devCodeIn, float bIn, float sIn, float eIn, float hIn, byte cmdIn, String messageIn){
   if (inputMac.length() != 17) {
-    // Serial.println("invalid MAC address format.");
     jsonInfoHttp.clear();
     jsonInfoHttp["T"] = CMD_ESP_NOW_SEND;
     jsonInfoHttp["status"] = 3;
@@ -324,7 +302,6 @@ void espNowSingleDevSend(String inputMac, byte devCodeIn, float bIn, float sIn, 
   espNowMessage.elbow    = eIn;
   espNowMessage.hand     = hIn;
   espNowMessage.cmd      = cmdIn;
-  // espNowMessage.message  = messageIn;
   strcpy(espNowMessage.message, messageIn.c_str());
 
   uint8_t macArray[6];
@@ -337,12 +314,6 @@ void espNowSingleDevSend(String inputMac, byte devCodeIn, float bIn, float sIn, 
     (uint8_t *) &espNowMessage,
     sizeof(struct_message));
 
-  // if (result == ESP_OK) {
-  //   Serial.println("Sent with success");
-  // }
-  // else {
-  //   Serial.println("Error sending the data");
-  // }
   jsonInfoHttp.clear();
   jsonInfoHttp["T"] = CMD_ESP_NOW_SEND;
   jsonInfoHttp["status"] = (result == ESP_OK ? 8 : 7);
@@ -364,12 +335,6 @@ void espNowSingleDevFlowCtrl() {
                                   (uint8_t *) &espNowMessage,
                                   sizeof(struct_message));
 
-  // if (result == ESP_OK) {
-  //   Serial.println("Sent with success");
-  // }
-  // else {
-  //   Serial.println("Error sending the data");
-  // }
   jsonInfoHttp.clear();
   jsonInfoHttp["T"] = CMD_ESP_NOW_SEND;
   jsonInfoHttp["status"] = (result == ESP_OK ? 8 : 7);
@@ -388,12 +353,6 @@ void espNowGroupDevsFlowCtrl() {
   espNowMessage.hand     = radG;
 
   esp_err_t result = esp_now_send(0, (uint8_t *) &espNowMessage, sizeof(struct_message));
-  // if (result == ESP_OK) {
-  //   Serial.println("Sent with success");
-  // }
-  // else {
-  //   Serial.println("Error sending the data");
-  // }
   jsonInfoHttp.clear();
   jsonInfoHttp["T"] = CMD_ESP_NOW_SEND;
   jsonInfoHttp["status"] = (result == ESP_OK ? 8 : 7);

@@ -1,9 +1,7 @@
 #include <ArduinoJson.h>
 StaticJsonDocument<256> jsonCmdReceive;
 StaticJsonDocument<256> jsonInfoSend;
-StaticJsonDocument<512> jsonInfoHttp;
-
-// TaskHandle_t Pid_ctrl;
+StaticJsonDocument<1024> jsonInfoHttp;
 
 #include <SCServo.h>
 #include <nvs_flash.h>
@@ -18,21 +16,18 @@ StaticJsonDocument<512> jsonInfoHttp;
 #include <ESP32Encoder.h>
 #include <PID_v2.h>
 #include <SimpleKalmanFilter.h>
-// #include <ICM_20948.h>
 #include <math.h>
-#include <Adafruit_ICM20X.h>
+// #include <Adafruit_ICM20X.h>
 #include <Adafruit_ICM20948.h>
-#include <Adafruit_Sensor.h>
-
 
 // functions for barrery info.
 #include "battery_ctrl.h"
 
-// functions for oled.
-#include "oled_ctrl.h"
-
 // config for ugv.
 #include "ugv_config.h"
+
+// functions for oled.
+#include "oled_ctrl.h"
 
 // functions for the leds of UGV.
 #include "ugv_led_ctrl.h"
@@ -112,14 +107,7 @@ void setup() {
   mm_settings(mainType, moduleType);
 
   init_oled();
-  if (mainType == 1) {
-    screenLine_0 = "RaspRover";
-  } else if (mainType == 2) {
-    screenLine_0 = "UGV Rover";
-  } else if (mainType == 3) {
-    screenLine_0 = "UGV Beast";
-  } 
-  
+  screenLine_0 = "ugv_base_ros.git";
   screenLine_1 = "version: 0.93";
   screenLine_2 = "starting...";
   screenLine_3 = "";
@@ -205,6 +193,11 @@ void setup() {
   oled_update();
   if(InfoPrint == 1){Serial.println("ESP-NOW init.");}
   initEspNow();
+
+  screenLine_3 = "IMU Calibrating";
+  oled_update();
+  if(InfoPrint == 1){Serial.println("IMU Calibrating");}
+  imuCalibration();
 
   screenLine_3 = "UGV started";
   oled_update();

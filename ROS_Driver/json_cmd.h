@@ -1,8 +1,16 @@
+// ---===< Feedback Info >===---
+// base info feedback.
+// {"T":1001,"L":0,"R":0,"gx":0,"gy":0,"gz":0,"ax":0,"ay":0,"az":0,"mx":0,"my":0,"mz":0,"odl":0,"odr":0,"v":11.0}
 #define FEEDBACK_BASE_INFO  1001
+
+// imu info feedback.
+// {"T":1002,"gx":0,"gy":0,"gz":0,"ax":0,"ay":0,"az":0,"mx":0,"my":0,"mz":0}
 #define FEEDBACK_IMU_DATA   1002
-// esp-now recv
+
+// esp-now recv.
 // {"T":1003,"mac":"FF:FF:FF:FF:FF:FF","megs":"hello!"}
 #define CMD_ESP_NOW_RECV 1003
+
 // esp-now send status
 // 0:failed   1:succeed   2:Error initializing ESP-NOW
 // 3:invalid MAC address format.
@@ -11,9 +19,14 @@
 // 7:error sending the data.   8:sent with success.
 // {"T":1004,"mac":"FF:FF:FF:FF:FF:FF","status":1,"megs":"xxx"}
 #define CMD_ESP_NOW_SEND 1004
+
 // bus servos error feedback
 // {"T":1005,"id":1,"status":1}
 #define CMD_BUS_SERVO_ERROR 1005
+
+
+
+
 
 
 // emergency stop.
@@ -579,5 +592,8 @@
 
 
 // === === === mainType & moduleType settings. === === ===
+// set mainType & moduleType.
+// mainType: 1.RaspRover, 2.UGV Rover, 3.UGV Beast
+// moduleType: 0.Null, 1.RoArm, 2.PT
 // {"T":900,"main":1,"module":0}
 #define CMD_MM_TYPE_SET 900

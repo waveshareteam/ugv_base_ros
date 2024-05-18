@@ -386,14 +386,17 @@ void baseInfoFeedback() {
 	jsonInfoHttp["L"] = speedGetA;
 	jsonInfoHttp["R"] = speedGetB;
 
-	jsonInfoHttp["r"] = icm_roll;
-	jsonInfoHttp["p"] = icm_pitch;
-	jsonInfoHttp["y"] = icm_yaw;
+	jsonInfoHttp["gx"] = gx;
+	jsonInfoHttp["gy"] = gy;
+	jsonInfoHttp["gz"] = gz;
 
-	// jsonInfoHttp["q0"] = qw;
-	// jsonInfoHttp["q1"] = qx;
-	// jsonInfoHttp["q2"] = qy;
-	// jsonInfoHttp["q3"] = qz;
+	jsonInfoHttp["ax"] = ax;
+	jsonInfoHttp["ay"] = ay;
+	jsonInfoHttp["az"] = az;
+
+	jsonInfoHttp["mx"] = mx;
+	jsonInfoHttp["my"] = my;
+	jsonInfoHttp["mz"] = mz;
 
 	// jsonInfoHttp["temp"] = temp.temperature;
 
@@ -404,13 +407,13 @@ void baseInfoFeedback() {
 
 	switch(moduleType) {
 	case 1:
-		jsonInfoHttp["ax"] = lastX;
-		jsonInfoHttp["ay"] = lastY;
-		jsonInfoHttp["az"] = lastZ;
-		jsonInfoHttp["ab"] = radB;
-		jsonInfoHttp["as"] = radS;
-		jsonInfoHttp["ae"] = radE;
-		jsonInfoHttp["at"] = lastT;
+		jsonInfoHttp["x"] = lastX;
+		jsonInfoHttp["y"] = lastY;
+		jsonInfoHttp["z"] = lastZ;
+		jsonInfoHttp["b"] = radB;
+		jsonInfoHttp["s"] = radS;
+		jsonInfoHttp["e"] = radE;
+		jsonInfoHttp["t"] = lastT;
 		jsonInfoHttp["torB"] = servoFeedback[BASE_SERVO_ID - 11].load;
 		jsonInfoHttp["torS"] = servoFeedback[SHOULDER_DRIVING_SERVO_ID - 11].load - servoFeedback[SHOULDER_DRIVEN_SERVO_ID - 11].load;
 		jsonInfoHttp["torE"] = servoFeedback[ELBOW_SERVO_ID - 11].load;
@@ -452,4 +455,45 @@ void saveSpdRate() {
 	String getInfoJsonString;
 	serializeJson(jsonInfoHttp, getInfoJsonString);
 	appendStepJson("boot", getInfoJsonString);
+}
+
+
+// check the main & module type.
+void saveMainTypeModuleTpye(byte inputMain, byte inputModule) {
+	int _LineNum = missionContent("boot");
+	bool sameAsSaved = false;
+	int mm_line_num = -1;
+	String stepStringBuffer;
+	for (int i = 1; i<=_LineNum+1; i++) {
+		stepStringBuffer = readSingleLine("boot.mission", i);
+		DeserializationError err = deserializeJson(jsonCmdReceive, stepStringBuffer);
+		if (err == DeserializationError::Ok) {
+			int cmdType = jsonCmdReceive["T"].as<int>();
+			if (cmdType == CMD_MM_TYPE_SET) {
+				mm_line_num = i;
+				int jsonMain = jsonCmdReceive["main"];
+				int jsonModule = jsonCmdReceive["module"];
+				if (inputMain == jsonMain && inputModule == jsonModule) {
+					sameAsSaved = true;
+				}
+			}
+		}
+	}
+	if (!sameAsSaved) {
+		jsonInfoSend.clear();
+		jsonInfoSend["T"] = CMD_MM_TYPE_SET;
+		jsonInfoSend["main"] = inputMain;
+		jsonInfoSend["module"] = inputModule;
+		String contentBuffer;
+		serializeJson(jsonInfoSend, contentBuffer);
+		if (mm_line_num == -1) {
+			appendStepJson("boot", contentBuffer);
+			Serial.println("new mm_json appended.");
+		} else {
+			replaceStepJson("boot", mm_line_num-1, contentBuffer);
+			Serial.println("new mm_json replaced.");
+		}
+	} else {
+		Serial.println("same mm_json already saved.");
+	}
 }

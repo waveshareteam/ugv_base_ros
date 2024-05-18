@@ -210,13 +210,11 @@ double EOAT_JOINT_ANG  = 180.0;
 // true: torqueLock ON, servo produces torque.
 // false: torqueLock OFF, servo release torque.
 bool RoArmM2_torqueLock = true;
-bool emergencyStopFlag = false;
 bool newCmdReceived = false;
 
 bool nanIK;
 
 bool RoArmM2_initCheckSucceed  = false;
-// bool RoArmM2_initCheckSucceed   = true;
 
 // // // args for syncWritePos.
 u8  servoID[5] = {11, 12, 13, 14, 15};
@@ -372,10 +370,10 @@ unsigned long lastCmdRecvTime = millis();
 double icm_pitch = 0;
 double icm_roll = 0;
 double icm_yaw = 0;
+
 float icm_temp;
 unsigned long last_imu_update = 0;
 
-double qw, qx, qy, qz;
 double ax, ay, az;
 double mx, my, mz;
 double gx, gy, gz;
@@ -383,3 +381,19 @@ double gx, gy, gz;
 double en_odom_l, en_odom_r;
 
 unsigned long imu_last_time = micros();
+
+int sample_count = 240;
+
+double gx_offset = 0;
+double gy_offset = 0;
+double gz_offset = 0;
+double gyro_h = 0.04;
+
+float kf_accel_q = 1.0;
+float kf_accel_r = 0.1;
+float kf_accel_p = 0.1;
+
+double ax_offset = 0;
+double ay_offset = 0;
+double az_offset = 0;
+double accel_h = 0.01;

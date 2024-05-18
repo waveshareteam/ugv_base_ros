@@ -7,66 +7,29 @@ sensors_event_t gyro;
 sensors_event_t mag;
 sensors_event_t temp;
 
-// double icm_pitch;
-// double icm_roll;
-// double icm_yaw;
-// float  icm_temp;
-// unsigned long last_imu_update = 0;
+SimpleKalmanFilter	kf_ax(kf_accel_q, kf_accel_r, kf_accel_p);
+SimpleKalmanFilter	kf_ay(kf_accel_q, kf_accel_r, kf_accel_p);
+SimpleKalmanFilter	kf_az(kf_accel_q, kf_accel_r, kf_accel_p);
 
+SimpleKalmanFilter	kf_mx(0.5, 1, 0.1);
+SimpleKalmanFilter	kf_my(0.5, 1, 0.1);
+SimpleKalmanFilter	kf_mz(0.5, 1, 0.1);
 
+SimpleKalmanFilter	kf_gx(kf_accel_q, kf_accel_r, kf_accel_p);
+SimpleKalmanFilter	kf_gy(kf_accel_q, kf_accel_r, kf_accel_p);
+SimpleKalmanFilter	kf_gz(kf_accel_q, kf_accel_r, kf_accel_p);
 
-
-// SimpleKalmanFilter	kf_ax(0.5, 1, 0.1);
-// SimpleKalmanFilter	kf_ay(0.5, 1, 0.1);
-// SimpleKalmanFilter	kf_az(0.5, 1, 0.1);
-
-// SimpleKalmanFilter	kf_mx(0.5, 1, 0.1);
-// SimpleKalmanFilter	kf_my(0.5, 1, 0.1);
-// SimpleKalmanFilter	kf_mz(0.5, 1, 0.1);
-
-// SimpleKalmanFilter	kf_gx(0.5, 1, 0.1);
-// SimpleKalmanFilter	kf_gy(0.5, 1, 0.1);
-// SimpleKalmanFilter	kf_gz(0.5, 1, 0.1);
-
-
-
-
-
-// SimpleKalmanFilter	kf_yaw(1, 1, 0.01);
-
-// double qw;
-// double qx;
-// double qy;
-// double qz;
-
-// double ax;
-// double ay;
-// double az;
-
-// double mx;
-// double my;
-// double mz;
-
-// double gx;
-// double gy;
-// double gz;
 
 void imu_init() {
   Serial.println("Adafruit ICM20948 test!");
 
   // Try to initialize!
   if (!icm.begin_I2C(0x68)) {
-    // if (!icm.begin_SPI(ICM_CS)) {
-    // if (!icm.begin_SPI(ICM_CS, ICM_SCK, ICM_MISO, ICM_MOSI)) {
-
     Serial.println("Failed to find ICM20948 chip");
-    // while (1) {
-    //   delay(10);
-    // }
     return;
   }
   Serial.println("ICM20948 Found!");
-  // icm.setAccelRange(ICM20948_ACCEL_RANGE_16_G);
+  icm.setAccelRange(ICM20948_ACCEL_RANGE_2_G);
   Serial.print("Accelerometer range set to: ");
   switch (icm.getAccelRange()) {
   case ICM20948_ACCEL_RANGE_2_G:
@@ -84,7 +47,7 @@ void imu_init() {
   }
   Serial.println("OK");
 
-  // icm.setGyroRange(ICM20948_GYRO_RANGE_2000_DPS);
+  icm.setGyroRange(ICM20948_GYRO_RANGE_250_DPS);
   Serial.print("Gyro range set to: ");
   switch (icm.getGyroRange()) {
   case ICM20948_GYRO_RANGE_250_DPS:
@@ -148,24 +111,35 @@ void imu_init() {
 void updateIMUData() {
 	icm.getEvent(&accel, &gyro, &temp, &mag);
 
-	ax = accel.acceleration.x;
-	ay = accel.acceleration.y;
-	az = accel.acceleration.z;
+	ax = - kf_ax.updateEstimate(accel.acceleration.x) + ax_offset;
+	if (abs(ax) < accel_h) {
+		ax = 0;
+	}
+	ay = - kf_ay.updateEstimate(accel.acceleration.y) + ay_offset;
+	if (abs(ay) < accel_h) {
+		ay = 0;
+	}
+	az = - kf_az.updateEstimate(accel.acceleration.z) + az_offset;
+	if (abs(az) < accel_h * 6) {
+		az = 0;
+	}
 
-	mx = mag.magnetic.x;
-	my = mag.magnetic.y;
-	mz = mag.magnetic.z;
+	mx = kf_mx.updateEstimate(mag.magnetic.x);
+	my = kf_my.updateEstimate(mag.magnetic.y);
+	mz = kf_mz.updateEstimate(mag.magnetic.z);
 
-	gx = gyro.gyro.x;
-	gy = gyro.gyro.y;
-	gz = gyro.gyro.z;
-
-	double dt = (millis() - last_imu_update) / 1000.0;
-	last_imu_update = millis();
-
-	icm_pitch = icm_pitch - gy * dt;
-	icm_roll = icm_roll + gx * dt;
-	icm_yaw = icm_yaw + gz * dt;
+	gx = kf_gx.updateEstimate(gyro.gyro.x) - gx_offset;
+	if (abs(gx) < gyro_h) {
+		gx = 0;
+	}
+	gy = kf_gy.updateEstimate(gyro.gyro.y) - gy_offset;
+	if (abs(gy) < gyro_h) {
+		gy = 0;
+	}
+	gz = kf_gz.updateEstimate(gyro.gyro.z) - gz_offset;
+	if (abs(gz) < gyro_h) {
+		gz = 0;
+	}
 }
 
 
@@ -178,62 +152,33 @@ void imuUpdate_threading( void * parameter) {
 
 
 void imuCalibration() {
-	// jsonInfoHttp.clear();
-	// switch (inputStep) {
-	// case 0:
-	// 	if (InfoPrint == 1){
-	// 		jsonInfoHttp["info"] = "keep 10dof-imu device horizontal and then calibrate next step.";
-	// 	}
-	// 	break;
-	// case 1:
-	// 	calibrateStepA();
-	// 	if (InfoPrint == 1){
-	// 		jsonInfoHttp["info"] = "rotate z axis 180 degrees and then calibrate next step.";
-	// 	}
-	// 	break;
-	// case 2:
-	// 	calibrateStepB();
-	// 	if (InfoPrint == 1){
-	// 		jsonInfoHttp["info"] = "flip 10dof-imu device and keep it horizontal and then calibrate next step.";
-	// 	}
-	// 	break;
-	// case 3:
-	// 	calibrateStepC();
-	// 	if (InfoPrint == 1){
-	// 		jsonInfoHttp["info"] = "calibration done.";
-	// 	}
-	// 	break;
-	// }
-	// String getInfoJsonString;
-	// serializeJson(jsonInfoHttp, getInfoJsonString);
-	// Serial.println(getInfoJsonString);
+	for (int i=0;i<sample_count;i++){
+		icm.getEvent(&accel, &gyro, &temp, &mag);
+
+		gx_offset += kf_gx.updateEstimate(gyro.gyro.x);
+		gy_offset += kf_gy.updateEstimate(gyro.gyro.y);
+		gz_offset += kf_gz.updateEstimate(gyro.gyro.z);
+
+		ax_offset += kf_ax.updateEstimate(accel.acceleration.x);
+		ay_offset += kf_ay.updateEstimate(accel.acceleration.y);
+		az_offset += kf_az.updateEstimate(accel.acceleration.z);
+
+		delay(10);
+	}
+	gx_offset = gx_offset / sample_count;
+	gy_offset = gy_offset / sample_count;
+	gz_offset = gz_offset / sample_count;
+
+	ax_offset = ax_offset / sample_count;
+	ay_offset = ay_offset / sample_count;
+	az_offset = az_offset / sample_count;
+  
 }
 
 
 void getIMUData() {
 	jsonInfoHttp.clear();
 	jsonInfoHttp["T"] = FEEDBACK_IMU_DATA;
-
-	jsonInfoHttp["r"] = icm_roll;
-	jsonInfoHttp["p"] = icm_pitch;
-	// jsonInfoHttp["y"] = icm_yaw;
-
-	// jsonInfoHttp["q0"] = qw;
-	// jsonInfoHttp["q1"] = qx;
-	// jsonInfoHttp["q2"] = qy;
-	// jsonInfoHttp["q3"] = qz;
-
-	jsonInfoHttp["ax"] = ax;
-	jsonInfoHttp["ay"] = ay;
-	jsonInfoHttp["az"] = az;
-
-	jsonInfoHttp["gx"] = gx;
-	jsonInfoHttp["gy"] = gy;
-	jsonInfoHttp["gz"] = gz;
-
-	jsonInfoHttp["mx"] = mx;
-	jsonInfoHttp["my"] = my;
-	jsonInfoHttp["mz"] = mz;
 
 	jsonInfoHttp["temp"] = temp.temperature;
 
@@ -242,19 +187,11 @@ void getIMUData() {
 	Serial.println(getInfoJsonString);
 }
 
+
 void getIMUOffset() {
-	// getIMUOffsetData(&offsetData);
-	// jsonInfoHttp.clear();
-	// jsonInfoHttp["T"] = 101;
 
-	// jsonInfoHttp["x"] = offsetData.X;
-	// jsonInfoHttp["y"] = offsetData.Y;
-	// jsonInfoHttp["z"] = offsetData.Z;
-
-	// String getInfoJsonString;
-	// serializeJson(jsonInfoHttp, getInfoJsonString);
-	// Serial.println(getInfoJsonString);
 }
+
 
 void setIMUOffset(int16_t inputX, int16_t inputY, int16_t inputZ) {
 	// setOffset(inputX, inputY, inputZ);

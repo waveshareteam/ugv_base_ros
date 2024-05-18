@@ -3,16 +3,9 @@ void jsonCmdReceiveHandler(){
 	switch(cmdType){
 	// emergency stop.
 	case CMD_EMERGENCY_STOP:
-												emergencyStopFlag = true;
 												emergencyStopProcessing();
   											setGoalSpeed(0, 0);
 												break;
-	case CMD_RESET_EMERGENCY: 
-												emergencyStopFlag = false;
-												break;
-
-
-
 	case CMD_SPEED_CTRL:	if (jsonCmdReceive.containsKey("T") &&
 														jsonCmdReceive.containsKey("L") &&
 														jsonCmdReceive.containsKey("R")){
@@ -486,12 +479,13 @@ void jsonCmdReceiveHandler(){
 	case CMD_INFO_PRINT:	configInfoPrint(
 												jsonCmdReceive["cmd"]
 												);break;
-	// case CMD_PID_RESET_A: PID_v2 pidA(__kp, __ki, __kd, PID::Direct);
-	// 											PID_v2 pidB(__kp, __ki, __kd, PID::Direct);
-	// 											pidControllerInit();break;
 
 	// mainType & moduleType settings.
 	case CMD_MM_TYPE_SET: mm_settings(
+												jsonCmdReceive["main"],
+												jsonCmdReceive["module"]
+												);
+												saveMainTypeModuleTpye(
 												jsonCmdReceive["main"],
 												jsonCmdReceive["module"]
 												);

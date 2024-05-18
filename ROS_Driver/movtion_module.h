@@ -139,33 +139,10 @@ double plusesRate = 3.14159265359 * WHEEL_D / ONE_CIRCLE_PLUSES;
 
 
 void initEncoders() {
-  // if(SET_MOTOR_DIR){
-  //   encoderA.attachHalfQuad(AENCB, AENCA);
-  //   encoderB.attachHalfQuad(BENCB, BENCA);
-  // }else{
   encoderA.attachHalfQuad(AENCA, AENCB);
   encoderB.attachHalfQuad(BENCA, BENCB);
-  // }
   encoderA.setCount(0);
   encoderB.setCount(0);
-}
-
-// plusesRate = 3.14159265359 * WHEEL_D / ONE_CIRCLE_PLUSES;
-void getWheelSpeed() {
-  unsigned long currentTime = micros();
-  long encoderPulsesA = encoderA.getCount();
-  long encoderPulsesB = encoderB.getCount();
-
-  if (!SET_MOTOR_DIR) {
-    speedGetA = (plusesRate * (encoderPulsesA - lastEncoderA)) / ((double)(currentTime - lastTime) / 1000000);
-    speedGetB = (plusesRate * (encoderPulsesB - lastEncoderB)) / ((double)(currentTime - lastTime) / 1000000);
-  } else {
-    speedGetA = (plusesRate * (lastEncoderA - encoderPulsesA)) / ((double)(currentTime - lastTime) / 1000000);
-    speedGetB = (plusesRate * (lastEncoderB - encoderPulsesB)) / ((double)(currentTime - lastTime) / 1000000);
-  }
-  lastEncoderA = encoderPulsesA;
-  lastEncoderB = encoderPulsesB;
-  lastTime = currentTime;
 }
 
 void getLeftSpeed() {
@@ -195,8 +172,6 @@ void getRightSpeed() {
   lastEncoderB = encoderPulsesB;
   lastRightSpdTime = currentTime;
 }
-
-
 
 
 
@@ -289,7 +264,6 @@ void rightCtrl(float pwmInputB){
 }
 
 void setGoalSpeed(float inputLeft, float inputRight) {
-  // setpoint_cmd_recv = millis();
   usePIDCompute = true;
 
   if(inputLeft < -2.0 || inputLeft > 2.0){
@@ -312,30 +286,6 @@ void setGoalSpeed(float inputLeft, float inputRight) {
     pidB.Setpoint(setpointB);
     setpointB_buffer = inputRight;
   }
-}
-
-void pidControllerCompute() {
-  if (!usePIDCompute) {
-    return;
-  }
-
-  outputA = pidA.Run(speedGetA);
-  if (abs(outputA)<THRESHOLD_PWM) {
-    outputA = 0;
-  }
-  if (setpointA == 0 && speedGetA == 0) {
-    outputA = 0;
-  }
-  leftCtrl(outputA);
-
-  outputB = pidB.Run(speedGetB);
-  if (abs(outputB)<THRESHOLD_PWM) {
-    outputB = 0;
-  }
-  if (setpointB == 0 && speedGetB == 0) {
-    outputB = 0;
-  }
-  rightCtrl(outputB);
 }
 
 void LeftPidControllerCompute() {
@@ -407,7 +357,7 @@ void mm_settings(byte inputMain, byte inputModule) {
 
   // mainType:02 UGV Rover
   // #define WHEEL_D 0.0800
-  // #define ONE_CIRCLE_PLUSES  1650
+  // #define ONE_CIRCLE_PLUSES  1650(v=0.90) -> 660(v>=0.93)
   // #define TRACK_WIDTH  0.172
   // #define SET_MOTOR_DIR false
 
@@ -434,7 +384,6 @@ void mm_settings(byte inputMain, byte inputModule) {
     SET_MOTOR_DIR = true;
   }
   plusesRate = 3.14159265359 * WHEEL_D / ONE_CIRCLE_PLUSES;
-  // initEncoders();
 
   if (mainType == 1) {
     screenLine_2 = "RaspRover";

@@ -478,13 +478,6 @@ void simpleLinkageIkRad(double LA, double LB, double aIn, double bIn) {
 
 // AI prompt:
 // *** this function is written with AI. ***
-// '''
-// 我需要一个C语言函数，在一个平面直角坐标系中，输入一个坐标点(x,y)，返回值有两个：
-// 1. 这个坐标点距离坐标系原点的距离。
-// 2. 这个点与坐标系原点所连线段与x轴正方向的夹角，夹角范围在(-PI, PI)之间。
-// '''
-
-// AI prompt:
 // I need a C language function. In a 2D Cartesian coordinate system, 
 // input a coordinate point (x, y). The function should return two values:
 
@@ -500,14 +493,8 @@ void cartesian_to_polar(double x, double y, double* r, double* theta) {
 
 // AI prompt:
 // *** this function is written with AI. ***
-// 我现在需要一个功能与上面函数相反的函数：
-// 输入机械臂三个关节的轴的角度（弧度制），返回当前机械臂末端点的坐标点。
-
-// 你在回答的过程中可以告诉我你还有什么其它需要的信息。
-// '''
 // use this two functions to compute the position of coordinate point
 // by inputing the jointRad.
-// 这个函数用于将极坐标转换为直角坐标
 void polarToCartesian(double r, double theta, double &x, double &y) {
   x = r * cos(theta);
   y = r * sin(theta);
@@ -591,10 +578,6 @@ void RoArmM2_infoFeedback() {
   jsonInfoHttp["s"] = radS;
   jsonInfoHttp["e"] = radE;
   jsonInfoHttp["t"] = lastT;
-  // jsonInfoHttp["goalX"] = goalX;
-  // jsonInfoHttp["goalY"] = goalY;
-  // jsonInfoHttp["goalZ"] = goalZ;
-  // jsonInfoHttp["goalT"] = goalT;
   jsonInfoHttp["torB"] = servoFeedback[BASE_SERVO_ID - 11].load;
   jsonInfoHttp["torS"] = servoFeedback[SHOULDER_DRIVING_SERVO_ID - 11].load - servoFeedback[SHOULDER_DRIVEN_SERVO_ID - 11].load;
   jsonInfoHttp["torE"] = servoFeedback[ELBOW_SERVO_ID - 11].load;
@@ -607,9 +590,7 @@ void RoArmM2_infoFeedback() {
 
 
 // AI prompt:
-// 在平面直角坐标系中，有一点A，输入点A的X,Y坐标和角度参数theta(弧度制)，点A绕直角坐标系原点
-// 逆时针转动theta作为点B，返回点B的XY坐标值，我需要C语言的函数。
-// AI prompt:
+// *** this function is written with AI. ***
 // In a 2D Cartesian coordinate system, there is a point A.
 // Input the X and Y coordinates of point A and an angle parameter theta (in radians).
 // Point A rotates counterclockwise around the origin of the Cartesian coordinate 
@@ -623,9 +604,6 @@ void rotatePoint(double theta, double *xB, double *yB) {
 }
 
 
-// AI prompt:
-// 在平面直角坐标系种，有一点A，输入点A的X,Y坐标值，输入一个距离参数S，
-// 点A向原点方向移动S作为点B，返回点B的坐标值。我需要C语言的函数。
 void movePoint(double xA, double yA, double s, double *xB, double *yB) {
   double distance = sqrt(pow(xA, 2) + pow(yA, 2));  
   if(distance - s <= 1e-6) {
@@ -891,8 +869,6 @@ void RoArmM2_allPosAbsBesselCtrl(double inputX, double inputY, double inputZ, do
 
 
 // ChatGPT prompt:
-// '''
-// 我需要一个函数，输入圆心坐标点、半径和比例，当比例从0到1变化时，函数输出的坐标点可以组成一个完整的圆。
 // '''
 // I need a function that inputs the center coordinate point, 
 // radius and scale(t), and when the scale(t) changes from 0 to 1, 
