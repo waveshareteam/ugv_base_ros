@@ -1,177 +1,122 @@
-#define DEG2ANG 57.29577951307855
+#define AD0_VAL 0
+ICM_20948_I2C myICM;
+icm_20948_DMP_data_t data;
 
-Adafruit_ICM20948 icm;
+SimpleKalmanFilter  kf_ax(kf_accel_q, kf_accel_r, kf_accel_p);
+SimpleKalmanFilter  kf_ay(kf_accel_q, kf_accel_r, kf_accel_p);
+SimpleKalmanFilter  kf_az(kf_accel_q, kf_accel_r, kf_accel_p);
 
-sensors_event_t accel;
-sensors_event_t gyro;
-sensors_event_t mag;
-sensors_event_t temp;
-
-SimpleKalmanFilter	kf_ax(kf_accel_q, kf_accel_r, kf_accel_p);
-SimpleKalmanFilter	kf_ay(kf_accel_q, kf_accel_r, kf_accel_p);
-SimpleKalmanFilter	kf_az(kf_accel_q, kf_accel_r, kf_accel_p);
-
-SimpleKalmanFilter	kf_mx(0.5, 1, 0.1);
-SimpleKalmanFilter	kf_my(0.5, 1, 0.1);
-SimpleKalmanFilter	kf_mz(0.5, 1, 0.1);
-
-SimpleKalmanFilter	kf_gx(kf_accel_q, kf_accel_r, kf_accel_p);
-SimpleKalmanFilter	kf_gy(kf_accel_q, kf_accel_r, kf_accel_p);
-SimpleKalmanFilter	kf_gz(kf_accel_q, kf_accel_r, kf_accel_p);
-
+SimpleKalmanFilter  kf_gx(kf_accel_q, kf_accel_r, kf_accel_p);
+SimpleKalmanFilter  kf_gy(kf_accel_q, kf_accel_r, kf_accel_p);
+SimpleKalmanFilter  kf_gz(kf_accel_q, kf_accel_r, kf_accel_p);
 
 void imu_init() {
-  Serial.println("Adafruit ICM20948 test!");
-
-  // Try to initialize!
-  if (!icm.begin_I2C(0x68)) {
-    Serial.println("Failed to find ICM20948 chip");
-    return;
+  bool initialized = false;
+  while (!initialized) {
+    myICM.begin(Wire, AD0_VAL);
+    Serial.println("Initialization of the sensor returned: ");
+    Serial.println(myICM.statusString());
+    if (myICM.status != ICM_20948_Stat_Ok) {
+      Serial.println(F("Trying again..."));
+      delay(500);
+    }
+    else {
+      initialized = true;
+    }
   }
-  Serial.println("ICM20948 Found!");
-  icm.setAccelRange(ICM20948_ACCEL_RANGE_2_G);
-  Serial.print("Accelerometer range set to: ");
-  switch (icm.getAccelRange()) {
-  case ICM20948_ACCEL_RANGE_2_G:
-    Serial.println("+-2G");
-    break;
-  case ICM20948_ACCEL_RANGE_4_G:
-    Serial.println("+-4G");
-    break;
-  case ICM20948_ACCEL_RANGE_8_G:
-    Serial.println("+-8G");
-    break;
-  case ICM20948_ACCEL_RANGE_16_G:
-    Serial.println("+-16G");
-    break;
+  Serial.println(F("Device connected!"));
+  bool success = true;
+  success &= (myICM.initializeDMP() == ICM_20948_Stat_Ok);
+
+  // myICM.setDMPstartAddress();
+  // myICM.setDMPendAddress();
+  // myICM.setDMPrate(20);
+
+  success &= (myICM.enableDMPSensor(INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR) == ICM_20948_Stat_Ok);
+
+  success &= (myICM.enableDMPSensor(INV_ICM20948_SENSOR_RAW_GYROSCOPE) == ICM_20948_Stat_Ok);
+  success &= (myICM.enableDMPSensor(INV_ICM20948_SENSOR_RAW_ACCELEROMETER) == ICM_20948_Stat_Ok);
+
+  success &= (myICM.setDMPODRrate(DMP_ODR_Reg_Quat6, 1) == ICM_20948_Stat_Ok);
+  myICM.setSampleMode((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), ICM_20948_Sample_Mode_Continuous);
+  delay(2);
+  ICM_20948_fss_t myFSS;
+  // myFSS.a = gpm4;
+  // myFSS.g = dps2000;
+  myFSS.a = gpm16;   // (ICM_20948_ACCEL_CONFIG_FS_SEL_e)
+  myFSS.g = dps2000; // (ICM_20948_GYRO_CONFIG_1_FS_SEL_e)
+  myICM.setFullScale((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), myFSS);
+
+  myICM.lowPower(false);
+
+  success &= (myICM.setDMPODRrate(DMP_ODR_Reg_Accel, 2) == ICM_20948_Stat_Ok);
+  success &= (myICM.setDMPODRrate(DMP_ODR_Reg_Gyro, 2) == ICM_20948_Stat_Ok);
+  success &= (myICM.setDMPODRrate(DMP_ODR_Reg_Gyro_Calibr, 2) == ICM_20948_Stat_Ok);
+
+  success &= (myICM.enableFIFO() == ICM_20948_Stat_Ok);
+  success &= (myICM.enableDMP() == ICM_20948_Stat_Ok);
+  success &= (myICM.resetDMP() == ICM_20948_Stat_Ok);
+  success &= (myICM.resetFIFO() == ICM_20948_Stat_Ok);
+  if (success) {
+    Serial.println(F("DMP enabled!"));
+  } else {
+    Serial.println(F("Enable DMP failed!"));
+    Serial.println(F("Please check that you have uncommented line 29 (#define ICM_20948_USE_DMP) in ICM_20948_C.h..."));
   }
-  Serial.println("OK");
-
-  icm.setGyroRange(ICM20948_GYRO_RANGE_250_DPS);
-  Serial.print("Gyro range set to: ");
-  switch (icm.getGyroRange()) {
-  case ICM20948_GYRO_RANGE_250_DPS:
-    Serial.println("250 degrees/s");
-    break;
-  case ICM20948_GYRO_RANGE_500_DPS:
-    Serial.println("500 degrees/s");
-    break;
-  case ICM20948_GYRO_RANGE_1000_DPS:
-    Serial.println("1000 degrees/s");
-    break;
-  case ICM20948_GYRO_RANGE_2000_DPS:
-    Serial.println("2000 degrees/s");
-    break;
-  }
-
-  //  icm.setAccelRateDivisor(4095);
-  uint16_t accel_divisor = icm.getAccelRateDivisor();
-  float accel_rate = 1125 / (1.0 + accel_divisor);
-
-  Serial.print("Accelerometer data rate divisor set to: ");
-  Serial.println(accel_divisor);
-  Serial.print("Accelerometer data rate (Hz) is approximately: ");
-  Serial.println(accel_rate);
-
-  //  icm.setGyroRateDivisor(255);
-  uint8_t gyro_divisor = icm.getGyroRateDivisor();
-  float gyro_rate = 1100 / (1.0 + gyro_divisor);
-
-  Serial.print("Gyro data rate divisor set to: ");
-  Serial.println(gyro_divisor);
-  Serial.print("Gyro data rate (Hz) is approximately: ");
-  Serial.println(gyro_rate);
-
-  // icm.setMagDataRate(AK09916_MAG_DATARATE_10_HZ);
-  Serial.print("Magnetometer data rate set to: ");
-  switch (icm.getMagDataRate()) {
-  case AK09916_MAG_DATARATE_SHUTDOWN:
-    Serial.println("Shutdown");
-    break;
-  case AK09916_MAG_DATARATE_SINGLE:
-    Serial.println("Single/One shot");
-    break;
-  case AK09916_MAG_DATARATE_10_HZ:
-    Serial.println("10 Hz");
-    break;
-  case AK09916_MAG_DATARATE_20_HZ:
-    Serial.println("20 Hz");
-    break;
-  case AK09916_MAG_DATARATE_50_HZ:
-    Serial.println("50 Hz");
-    break;
-  case AK09916_MAG_DATARATE_100_HZ:
-    Serial.println("100 Hz");
-    break;
-  }
-  Serial.println();
 }
 
 
 void updateIMUData() {
-	icm.getEvent(&accel, &gyro, &temp, &mag);
+  myICM.readDMPdataFromFIFO(&data);
+  if ((myICM.status == ICM_20948_Stat_Ok) || (myICM.status == ICM_20948_Stat_FIFOMoreDataAvail)) {
+    if ((data.header & DMP_header_bitmap_Quat6) > 0) {
+      q1 = ((double)data.Quat6.Data.Q1) / 1073741824.0; // Convert to double. Divide by 2^30
+      q2 = ((double)data.Quat6.Data.Q2) / 1073741824.0; // Convert to double. Divide by 2^30
+      q3 = ((double)data.Quat6.Data.Q3) / 1073741824.0; // Convert to double. Divide by 2^30
+      q0 = sqrt(1.0 - ((q1 * q1) + (q2 * q2) + (q3 * q3)));
+      q2sqr = q2 * q2;
 
-	ax = - kf_ax.updateEstimate(accel.acceleration.x) + ax_offset;
-	if (abs(ax) < accel_h) {
-		ax = 0;
-	}
-	ay = - kf_ay.updateEstimate(accel.acceleration.y) + ay_offset;
-	if (abs(ay) < accel_h) {
-		ay = 0;
-	}
-	az = - kf_az.updateEstimate(accel.acceleration.z) + az_offset;
-	if (abs(az) < accel_h * 6) {
-		az = 0;
-	}
+      // roll (x-axis rotation)
+      t0 = +2.0 * (q0 * q1 + q2 * q3);
+      t1 = +1.0 - 2.0 * (q1 * q1 + q2sqr);
+      icm_roll = atan2(t0, t1);
 
-	mx = kf_mx.updateEstimate(mag.magnetic.x);
-	my = kf_my.updateEstimate(mag.magnetic.y);
-	mz = kf_mz.updateEstimate(mag.magnetic.z);
+      // pitch (y-axis rotation)
+      t2 = +2.0 * (q0 * q2 - q3 * q1);
+      t2 = t2 > 1.0 ? 1.0 : t2;
+      t2 = t2 < -1.0 ? -1.0 : t2;
+      icm_pitch = asin(t2);
 
-	gx = kf_gx.updateEstimate(gyro.gyro.x) - gx_offset;
-	if (abs(gx) < gyro_h) {
-		gx = 0;
-	}
-	gy = kf_gy.updateEstimate(gyro.gyro.y) - gy_offset;
-	if (abs(gy) < gyro_h) {
-		gy = 0;
-	}
-	gz = kf_gz.updateEstimate(gyro.gyro.z) - gz_offset;
-	if (abs(gz) < gyro_h) {
-		gz = 0;
-	}
-}
+      // yaw (z-axis rotation)
+      t3 = +2.0 * (q0 * q3 + q1 * q2);
+      t4 = +1.0 - 2.0 * (q2sqr + q3 * q3);
+      icm_yaw = atan2(t3, t4);
+    }
+  } else {
+    // Serial.println("1");
+  }
 
-
-void imuUpdate_threading( void * parameter) {
-	while (true) {
-		updateIMUData();
-		delay(1);
-	}
+  if ((data.header & DMP_header_bitmap_Accel) > 0) {
+    ax = kf_ax.updateEstimate((data.Raw_Accel.Data.X/2048.0));
+    ay = kf_ay.updateEstimate((data.Raw_Accel.Data.Y/2048.0));
+    az = kf_az.updateEstimate((data.Raw_Accel.Data.Z/2048.0));
+    // ax = data.Raw_Accel.Data.X/2048.0;
+    // ay = data.Raw_Accel.Data.Y/2048.0;
+    // az = data.Raw_Accel.Data.Z/2048.0;
+  }
+  if ((data.header & DMP_header_bitmap_Gyro) > 0) {
+    gx = kf_gx.updateEstimate((data.Raw_Gyro.Data.X/16.4) * PI / 180.0);
+    gy = kf_gy.updateEstimate((data.Raw_Gyro.Data.Y/16.4) * PI / 180.0);
+    gz = kf_gz.updateEstimate((data.Raw_Gyro.Data.Z/16.4) * PI / 180.0);
+    // gx = (data.Raw_Gyro.Data.X/16.4) * PI / 180.0;
+    // gy = (data.Raw_Gyro.Data.Y/16.4) * PI / 180.0;
+    // gz = (data.Raw_Gyro.Data.Z/16.4) * PI / 180.0;
+  }
+  // delay(10);
 }
 
 
 void imuCalibration() {
-	for (int i=0;i<sample_count;i++){
-		icm.getEvent(&accel, &gyro, &temp, &mag);
-
-		gx_offset += kf_gx.updateEstimate(gyro.gyro.x);
-		gy_offset += kf_gy.updateEstimate(gyro.gyro.y);
-		gz_offset += kf_gz.updateEstimate(gyro.gyro.z);
-
-		ax_offset += kf_ax.updateEstimate(accel.acceleration.x);
-		ay_offset += kf_ay.updateEstimate(accel.acceleration.y);
-		az_offset += kf_az.updateEstimate(accel.acceleration.z);
-
-		delay(10);
-	}
-	gx_offset = gx_offset / sample_count;
-	gy_offset = gy_offset / sample_count;
-	gz_offset = gz_offset / sample_count;
-
-	ax_offset = ax_offset / sample_count;
-	ay_offset = ay_offset / sample_count;
-	az_offset = az_offset / sample_count;
   
 }
 
@@ -180,7 +125,14 @@ void getIMUData() {
 	jsonInfoHttp.clear();
 	jsonInfoHttp["T"] = FEEDBACK_IMU_DATA;
 
-	jsonInfoHttp["temp"] = temp.temperature;
+  jsonInfoHttp["r"] = icm_roll;
+  jsonInfoHttp["p"] = icm_pitch;
+  jsonInfoHttp["y"] = icm_yaw;
+
+  jsonInfoHttp["q0"] = q0;
+  jsonInfoHttp["q1"] = q1;
+  jsonInfoHttp["q2"] = q2;
+  jsonInfoHttp["q3"] = q3;
 
 	String getInfoJsonString;
 	serializeJson(jsonInfoHttp, getInfoJsonString);
@@ -194,5 +146,5 @@ void getIMUOffset() {
 
 
 void setIMUOffset(int16_t inputX, int16_t inputY, int16_t inputZ) {
-	// setOffset(inputX, inputY, inputZ);
+
 }

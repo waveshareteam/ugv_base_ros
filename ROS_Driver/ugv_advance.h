@@ -386,19 +386,22 @@ void baseInfoFeedback() {
 	jsonInfoHttp["L"] = speedGetA;
 	jsonInfoHttp["R"] = speedGetB;
 
-	jsonInfoHttp["gx"] = gx;
-	jsonInfoHttp["gy"] = gy;
-	jsonInfoHttp["gz"] = gz;
+	jsonInfoHttp["r"] = icm_roll;
+	jsonInfoHttp["p"] = icm_pitch;
+	jsonInfoHttp["y"] = icm_yaw;
+
+	jsonInfoHttp["q0"] = q0;
+	jsonInfoHttp["q1"] = q1;
+	jsonInfoHttp["q2"] = q2;
+	jsonInfoHttp["q3"] = q3;
 
 	jsonInfoHttp["ax"] = ax;
 	jsonInfoHttp["ay"] = ay;
 	jsonInfoHttp["az"] = az;
 
-	jsonInfoHttp["mx"] = mx;
-	jsonInfoHttp["my"] = my;
-	jsonInfoHttp["mz"] = mz;
-
-	// jsonInfoHttp["temp"] = temp.temperature;
+	jsonInfoHttp["gx"] = gx;
+	jsonInfoHttp["gy"] = gy;
+	jsonInfoHttp["gz"] = gz;
 
 	jsonInfoHttp["odl"] = en_odom_l;
 	jsonInfoHttp["odr"] = en_odom_r;
@@ -407,13 +410,13 @@ void baseInfoFeedback() {
 
 	switch(moduleType) {
 	case 1:
-		jsonInfoHttp["x"] = lastX;
-		jsonInfoHttp["y"] = lastY;
-		jsonInfoHttp["z"] = lastZ;
-		jsonInfoHttp["b"] = radB;
-		jsonInfoHttp["s"] = radS;
-		jsonInfoHttp["e"] = radE;
-		jsonInfoHttp["t"] = lastT;
+		jsonInfoHttp["ax"] = lastX;
+		jsonInfoHttp["ay"] = lastY;
+		jsonInfoHttp["az"] = lastZ;
+		jsonInfoHttp["ab"] = radB;
+		jsonInfoHttp["as"] = radS;
+		jsonInfoHttp["ae"] = radE;
+		jsonInfoHttp["at"] = lastT;
 		jsonInfoHttp["torB"] = servoFeedback[BASE_SERVO_ID - 11].load;
 		jsonInfoHttp["torS"] = servoFeedback[SHOULDER_DRIVING_SERVO_ID - 11].load - servoFeedback[SHOULDER_DRIVEN_SERVO_ID - 11].load;
 		jsonInfoHttp["torE"] = servoFeedback[ELBOW_SERVO_ID - 11].load;

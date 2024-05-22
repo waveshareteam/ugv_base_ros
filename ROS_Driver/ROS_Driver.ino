@@ -17,8 +17,7 @@ StaticJsonDocument<1024> jsonInfoHttp;
 #include <PID_v2.h>
 #include <SimpleKalmanFilter.h>
 #include <math.h>
-// #include <Adafruit_ICM20X.h>
-#include <Adafruit_ICM20948.h>
+#include "ICM_20948.h"
 
 // functions for barrery info.
 #include "battery_ctrl.h"
