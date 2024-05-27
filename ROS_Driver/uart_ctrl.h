@@ -51,9 +51,15 @@ void jsonCmdReceiveHandler(){
 												break;
 	case CMD_SET_IMU_OFFSET:
 												setIMUOffset(
-												jsonCmdReceive["x"],
-												jsonCmdReceive["y"],
-												jsonCmdReceive["z"]);break;
+												jsonCmdReceive["gx"],
+												jsonCmdReceive["gy"],
+												jsonCmdReceive["gz"],
+                        jsonCmdReceive["ax"],
+												jsonCmdReceive["ay"],
+												jsonCmdReceive["az"],
+                        jsonCmdReceive["cx"],
+												jsonCmdReceive["cy"],
+												jsonCmdReceive["cz"]);break;
 	case CMD_BASE_FEEDBACK:
 												baseInfoFeedback();break;
 	case CMD_BASE_FEEDBACK_FLOW:

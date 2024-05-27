@@ -402,3 +402,23 @@ double q0, q1, q2, q3, q2sqr, t0, t1, t2, t3, t4;
 
 float max_ax = 0;
 float min_ax = 0;
+
+// int32_t biasGyroX, biasGyroY, biasGyroZ;
+// int32_t biasAccelX, biasAccelY, biasAccelZ;
+// int32_t biasCPassX, biasCPassY, biasCPassZ;
+
+// Define a storage struct for the biases. Include a non-zero header and a simple checksum
+struct biasStore
+{
+  int32_t biasGyroX = 0;
+  int32_t biasGyroY = 0;
+  int32_t biasGyroZ = 0;
+  int32_t biasAccelX = 0;
+  int32_t biasAccelY = 0;
+  int32_t biasAccelZ = 0;
+  int32_t biasCPassX = 0;
+  int32_t biasCPassY = 0;
+  int32_t biasCPassZ = 0;
+};
+
+biasStore store;

@@ -11,6 +11,10 @@
 // {"T":1003,"mac":"FF:FF:FF:FF:FF:FF","megs":"hello!"}
 #define CMD_ESP_NOW_RECV 1003
 
+// get imu bias
+// {"T":129,"gx":0,"gy":0,"gz":0,"ax":0,"ay":0,"az":0,"cx":0,"cy":0,"cz":0}
+#define FEEDBACK_IMU_OFFSET 129
+
 // esp-now send status
 // 0:failed   1:succeed   2:Error initializing ESP-NOW
 // 3:invalid MAC address format.
@@ -117,7 +121,7 @@
 // {"T":128}
 #define CMD_GET_IMU_OFFSET	128
 
-// {"T":129,"x":-12,"y":0,"z":0}
+// {"T":129,"gx":0,"gy":0,"gz":0,"ax":0,"ay":0,"az":0,"cx":0,"cy":0,"cz":0}
 #define CMD_SET_IMU_OFFSET	129
 
 // {"T":130}

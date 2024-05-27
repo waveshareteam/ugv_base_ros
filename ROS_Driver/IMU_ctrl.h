@@ -28,16 +28,12 @@ void imu_init() {
   bool success = true;
   success &= (myICM.initializeDMP() == ICM_20948_Stat_Ok);
 
-  // myICM.setDMPstartAddress();
-  // myICM.setDMPendAddress();
-  // myICM.setDMPrate(20);
-
   success &= (myICM.enableDMPSensor(INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR) == ICM_20948_Stat_Ok);
-
   success &= (myICM.enableDMPSensor(INV_ICM20948_SENSOR_RAW_GYROSCOPE) == ICM_20948_Stat_Ok);
   success &= (myICM.enableDMPSensor(INV_ICM20948_SENSOR_RAW_ACCELEROMETER) == ICM_20948_Stat_Ok);
+  success &= (myICM.enableDMPSensor(INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED) == ICM_20948_Stat_Ok);
 
-  success &= (myICM.setDMPODRrate(DMP_ODR_Reg_Quat6, 1) == ICM_20948_Stat_Ok);
+  success &= (myICM.setDMPODRrate(DMP_ODR_Reg_Quat6, 3) == ICM_20948_Stat_Ok);
   myICM.setSampleMode((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), ICM_20948_Sample_Mode_Continuous);
   delay(2);
   ICM_20948_fss_t myFSS;
@@ -49,9 +45,11 @@ void imu_init() {
 
   myICM.lowPower(false);
 
-  success &= (myICM.setDMPODRrate(DMP_ODR_Reg_Accel, 2) == ICM_20948_Stat_Ok);
-  success &= (myICM.setDMPODRrate(DMP_ODR_Reg_Gyro, 2) == ICM_20948_Stat_Ok);
-  success &= (myICM.setDMPODRrate(DMP_ODR_Reg_Gyro_Calibr, 2) == ICM_20948_Stat_Ok);
+  success &= (myICM.setDMPODRrate(DMP_ODR_Reg_Accel, 3) == ICM_20948_Stat_Ok);
+  success &= (myICM.setDMPODRrate(DMP_ODR_Reg_Gyro, 3) == ICM_20948_Stat_Ok);
+  success &= (myICM.setDMPODRrate(DMP_ODR_Reg_Gyro_Calibr, 3) == ICM_20948_Stat_Ok);
+  success &= (myICM.setDMPODRrate(DMP_ODR_Reg_Cpass, 3) == ICM_20948_Stat_Ok);
+  success &= (myICM.setDMPODRrate(DMP_ODR_Reg_Cpass_Calibr, 3) == ICM_20948_Stat_Ok);
 
   success &= (myICM.enableFIFO() == ICM_20948_Stat_Ok);
   success &= (myICM.enableDMP() == ICM_20948_Stat_Ok);
@@ -100,24 +98,74 @@ void updateIMUData() {
     ax = kf_ax.updateEstimate((data.Raw_Accel.Data.X/2048.0));
     ay = kf_ay.updateEstimate((data.Raw_Accel.Data.Y/2048.0));
     az = kf_az.updateEstimate((data.Raw_Accel.Data.Z/2048.0));
-    // ax = data.Raw_Accel.Data.X/2048.0;
-    // ay = data.Raw_Accel.Data.Y/2048.0;
-    // az = data.Raw_Accel.Data.Z/2048.0;
   }
   if ((data.header & DMP_header_bitmap_Gyro) > 0) {
     gx = kf_gx.updateEstimate((data.Raw_Gyro.Data.X/16.4) * PI / 180.0);
     gy = kf_gy.updateEstimate((data.Raw_Gyro.Data.Y/16.4) * PI / 180.0);
     gz = kf_gz.updateEstimate((data.Raw_Gyro.Data.Z/16.4) * PI / 180.0);
-    // gx = (data.Raw_Gyro.Data.X/16.4) * PI / 180.0;
-    // gy = (data.Raw_Gyro.Data.Y/16.4) * PI / 180.0;
-    // gz = (data.Raw_Gyro.Data.Z/16.4) * PI / 180.0;
   }
-  // delay(10);
+  if ((data.header & DMP_header_bitmap_Compass) > 0) {
+    mx = data.Compass.Data.X;
+    my = data.Compass.Data.Y;
+    mz = data.Compass.Data.Z;
+  }
 }
 
 
+// {"T":127}
 void imuCalibration() {
-  
+  bool bias_success  = (myICM.getBiasGyroX(&store.biasGyroX) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasGyroY(&store.biasGyroY) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasGyroZ(&store.biasGyroZ) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasAccelX(&store.biasAccelX) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasAccelY(&store.biasAccelY) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasAccelZ(&store.biasAccelZ) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasCPassX(&store.biasCPassX) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasCPassY(&store.biasCPassY) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasCPassZ(&store.biasCPassZ) == ICM_20948_Stat_Ok);
+
+  if (!bias_success) {
+    jsonInfoHttp.clear();
+    jsonInfoHttp["T"] = FEEDBACK_IMU_OFFSET;
+
+    jsonInfoHttp["status"] = 0;
+
+    String getInfoJsonString;
+    serializeJson(jsonInfoHttp, getInfoJsonString);
+    Serial.println(getInfoJsonString);
+    return;
+  }
+
+  myICM.setBiasGyroX(store.biasGyroX);
+  myICM.setBiasGyroY(store.biasGyroY);
+  myICM.setBiasGyroZ(store.biasGyroZ);
+  myICM.setBiasAccelX(store.biasAccelX);
+  myICM.setBiasAccelY(store.biasAccelY);
+  myICM.setBiasAccelZ(store.biasAccelZ);
+  myICM.setBiasCPassX(store.biasCPassX);
+  myICM.setBiasCPassY(store.biasCPassY);
+  myICM.setBiasCPassZ(store.biasCPassZ);
+
+  jsonInfoHttp.clear();
+  jsonInfoHttp["T"] = FEEDBACK_IMU_OFFSET;
+
+  jsonInfoHttp["status"] = 1;
+
+  jsonInfoHttp["gx"] = store.biasGyroX;
+  jsonInfoHttp["gy"] = store.biasGyroY;
+  jsonInfoHttp["gz"] = store.biasGyroZ;
+
+  jsonInfoHttp["ax"] = store.biasAccelX;
+  jsonInfoHttp["ay"] = store.biasAccelY;
+  jsonInfoHttp["az"] = store.biasAccelZ;
+
+  jsonInfoHttp["cx"] = store.biasCPassX;
+  jsonInfoHttp["cy"] = store.biasCPassY;
+  jsonInfoHttp["cz"] = store.biasCPassZ;
+
+  String getInfoJsonString;
+  serializeJson(jsonInfoHttp, getInfoJsonString);
+  Serial.println(getInfoJsonString);
 }
 
 
@@ -141,10 +189,82 @@ void getIMUData() {
 
 
 void getIMUOffset() {
+  bool bias_success = (myICM.getBiasGyroX(&store.biasGyroX) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasGyroY(&store.biasGyroY) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasGyroZ(&store.biasGyroZ) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasAccelX(&store.biasAccelX) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasAccelY(&store.biasAccelY) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasAccelZ(&store.biasAccelZ) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasCPassX(&store.biasCPassX) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasCPassY(&store.biasCPassY) == ICM_20948_Stat_Ok);
+       bias_success &= (myICM.getBiasCPassZ(&store.biasCPassZ) == ICM_20948_Stat_Ok);
 
+  if (!bias_success) {
+    return;
+  }
+
+  jsonInfoHttp.clear();
+  jsonInfoHttp["T"] = FEEDBACK_IMU_OFFSET;
+
+  jsonInfoHttp["gx"] = store.biasGyroX;
+  jsonInfoHttp["gy"] = store.biasGyroY;
+  jsonInfoHttp["gz"] = store.biasGyroZ;
+
+  jsonInfoHttp["ax"] = store.biasAccelX;
+  jsonInfoHttp["ay"] = store.biasAccelY;
+  jsonInfoHttp["az"] = store.biasAccelZ;
+
+  jsonInfoHttp["cx"] = store.biasCPassX;
+  jsonInfoHttp["cy"] = store.biasCPassY;
+  jsonInfoHttp["cz"] = store.biasCPassZ;
+
+  String getInfoJsonString;
+  serializeJson(jsonInfoHttp, getInfoJsonString);
+  Serial.println(getInfoJsonString);
 }
 
 
-void setIMUOffset(int16_t inputX, int16_t inputY, int16_t inputZ) {
+void setIMUOffset(int32_t inGX, int32_t inGY, int32_t inGZ, int32_t inAX, int32_t inAY, int32_t inAZ, int32_t inCX, int32_t inCY, int32_t inCZ) {
+  store.biasGyroX = inGX;
+  store.biasGyroY = inGY;
+  store.biasGyroZ = inGZ;
 
+  store.biasAccelX = inAX;
+  store.biasAccelY = inAY;
+  store.biasAccelZ = inAZ;
+
+  store.biasCPassX = inCX;
+  store.biasCPassY = inCY;
+  store.biasCPassZ = inCZ;
+
+  myICM.setBiasGyroX(store.biasGyroX);
+  myICM.setBiasGyroX(store.biasGyroY);
+  myICM.setBiasGyroX(store.biasGyroZ);
+  myICM.setBiasAccelX(store.biasAccelX);
+  myICM.setBiasAccelX(store.biasAccelY);
+  myICM.setBiasAccelX(store.biasAccelZ);
+  myICM.setBiasCPassX(store.biasCPassX);
+  myICM.setBiasCPassX(store.biasCPassY);
+  myICM.setBiasCPassX(store.biasCPassZ);
+
+  jsonInfoHttp.clear();
+  jsonInfoHttp["T"] = FEEDBACK_IMU_OFFSET;
+
+  jsonInfoHttp["status"] = 1;
+
+  jsonInfoHttp["gx"] = store.biasGyroX;
+  jsonInfoHttp["gy"] = store.biasGyroY;
+  jsonInfoHttp["gz"] = store.biasGyroZ;
+
+  jsonInfoHttp["ax"] = store.biasAccelX;
+  jsonInfoHttp["ay"] = store.biasAccelY;
+  jsonInfoHttp["az"] = store.biasAccelZ;
+
+  jsonInfoHttp["cx"] = store.biasCPassX;
+  jsonInfoHttp["cy"] = store.biasCPassY;
+  jsonInfoHttp["cz"] = store.biasCPassZ;
+
+  String getInfoJsonString;
+  serializeJson(jsonInfoHttp, getInfoJsonString);
+  Serial.println(getInfoJsonString);
 }
