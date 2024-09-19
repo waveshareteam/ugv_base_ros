@@ -113,7 +113,8 @@ void macStringToByteArray(const String& macString, uint8_t* byteArray) {
 }
 
 
-void OnDataRecv(const unsigned char* mac, const unsigned char* incomingData, int len) {
+void OnDataRecv(const esp_now_recv_info_t *info, const unsigned char* incomingData, int len) {
+  const uint8_t *mac = info->src_addr;
   if (espNowMode != 3){
     return;
   }

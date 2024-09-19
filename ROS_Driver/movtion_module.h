@@ -14,11 +14,8 @@ void movtionPinInit(){
   pinMode(BIN2, OUTPUT);
   pinMode(PWMB, OUTPUT);
 
-  ledcSetup(channel_A, freq, ANALOG_WRITE_BITS);
-  ledcAttachPin(PWMA, channel_A);
-
-  ledcSetup(channel_B, freq, ANALOG_WRITE_BITS);
-  ledcAttachPin(PWMB, channel_B);
+  ledcAttach(PWMA, freq, ANALOG_WRITE_BITS);
+  ledcAttach(PWMB, freq, ANALOG_WRITE_BITS);
 
   digitalWrite(AIN1, LOW);
   digitalWrite(AIN2, LOW);
@@ -47,12 +44,12 @@ void switchPortCtrlA(float pwmInputA){
   if(pwmIntA > 0){
     digitalWrite(AIN1, LOW);
     digitalWrite(AIN2, HIGH);
-    ledcWrite(channel_A, pwmIntA);
+    ledcWrite(PWMA, pwmIntA);
   }
   else{
     digitalWrite(AIN1, HIGH);
     digitalWrite(AIN2, LOW);
-    ledcWrite(channel_A,-pwmIntA);
+    ledcWrite(PWMA,-pwmIntA);
   }
 }
 
@@ -68,12 +65,12 @@ void switchPortCtrlB(float pwmInputB){
   if(pwmIntB > 0){
     digitalWrite(BIN1, LOW);
     digitalWrite(BIN2, HIGH);
-    ledcWrite(channel_B, pwmIntB);
+    ledcWrite(PWMB, pwmIntB);
   }
   else{
     digitalWrite(BIN1, HIGH);
     digitalWrite(BIN2, LOW);
-    ledcWrite(channel_B,-pwmIntB);
+    ledcWrite(PWMB,-pwmIntB);
   }
 }
 
@@ -215,23 +212,23 @@ void leftCtrl(float pwmInputA){
     if(pwmIntA < 0){
       digitalWrite(AIN1, HIGH);
       digitalWrite(AIN2, LOW);
-      ledcWrite(channel_A, abs(pwmIntA));
+      ledcWrite(PWMA, abs(pwmIntA));
     }
     else{
       digitalWrite(AIN1, LOW);
       digitalWrite(AIN2, HIGH);
-      ledcWrite(channel_A, abs(pwmIntA));
+      ledcWrite(PWMA, abs(pwmIntA));
     }
   }else{
     if(pwmIntA < 0){
       digitalWrite(AIN1, LOW);
       digitalWrite(AIN2, HIGH);
-      ledcWrite(channel_A, abs(pwmIntA));
+      ledcWrite(PWMA, abs(pwmIntA));
     }
     else{
       digitalWrite(AIN1, HIGH);
       digitalWrite(AIN2, LOW);
-      ledcWrite(channel_A, abs(pwmIntA));
+      ledcWrite(PWMA, abs(pwmIntA));
     }
   }
 }
@@ -242,23 +239,23 @@ void rightCtrl(float pwmInputB){
     if(pwmIntB < 0){
       digitalWrite(BIN1, HIGH);
       digitalWrite(BIN2, LOW);
-      ledcWrite(channel_B, abs(pwmIntB));
+      ledcWrite(PWMB, abs(pwmIntB));
     }
     else{
       digitalWrite(BIN1, LOW);
       digitalWrite(BIN2, HIGH);
-      ledcWrite(channel_B, abs(pwmIntB));
+      ledcWrite(PWMB, abs(pwmIntB));
     }
   }else{
     if(pwmIntB < 0){
       digitalWrite(BIN1, LOW);
       digitalWrite(BIN2, HIGH);
-      ledcWrite(channel_B, abs(pwmIntB));
+      ledcWrite(PWMB, abs(pwmIntB));
     }
     else{
       digitalWrite(BIN1, HIGH);
       digitalWrite(BIN2, LOW);
-      ledcWrite(channel_B, abs(pwmIntB));
+      ledcWrite(PWMB, abs(pwmIntB));
     }
   }
 }
@@ -349,6 +346,7 @@ void changeHeartBeatDelay(int inputCmd) {
 void mm_settings(byte inputMain, byte inputModule) {
   mainType = inputMain;
   moduleType = inputModule;
+  
   // mainType:01 RaspRover
   // #define WHEEL_D 0.0800
   // #define ONE_CIRCLE_PLUSES  2100

@@ -269,7 +269,7 @@ const char index_html[] PROGMEM = R"rawliteral(
                     </div>
                     <div class="info-device-box">
                         <div class="info-box num-box-mid">
-                            <div>
+                            <!-- <div>
                                 <span class="num-color mid-num" id="r">-1.01</span>
                                 <span id="rn">ROLL</span>
                             </div>
@@ -292,7 +292,7 @@ const char index_html[] PROGMEM = R"rawliteral(
                             <div>
                                 <span class="num-color mid-num" id="mZ">-1.01</span>
                                 <span id="mZn">SPD_R</span>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
                     <div class="info-device-box">
@@ -695,7 +695,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         xhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
                 var jsonResponse = JSON.parse(this.responseText);
-                document.getElementById("V").innerHTML = jsonResponse.v.toFixed(2);
+                document.getElementById("V").innerHTML = jsonResponse.v.toFixed(2)/100;
                 if (jsonResponse.V<11.06) {
                     document.getElementById("V").classList.remove("num-color");
                     document.getElementById("V").classList.add("num-color-red");
@@ -704,24 +704,24 @@ const char index_html[] PROGMEM = R"rawliteral(
                     document.getElementById("V").classList.add("num-color");
                 }
 
-                document.getElementById("r").innerHTML = jsonResponse.r.toFixed(2);
-                document.getElementById("p").innerHTML = jsonResponse.p.toFixed(2);
-                document.getElementById("y").innerHTML = jsonResponse.y.toFixed(2);
-                document.getElementById("mZ").innerHTML = speed_rate;
+                // document.getElementById("r").innerHTML = jsonResponse.r.toFixed(2);
+                // document.getElementById("p").innerHTML = jsonResponse.p.toFixed(2);
+                // document.getElementById("y").innerHTML = jsonResponse.y.toFixed(2);
+                // document.getElementById("mZ").innerHTML = speed_rate;
 
-                if (jsonResponse.hasOwnProperty('pan')) {
-                    document.getElementById("mX").innerHTML = jsonResponse.pan.toFixed(2);
-                    document.getElementById("mY").innerHTML = jsonResponse.tilt.toFixed(2);
+                // if (jsonResponse.hasOwnProperty('pan')) {
+                //     document.getElementById("mX").innerHTML = jsonResponse.pan.toFixed(2);
+                //     document.getElementById("mY").innerHTML = jsonResponse.tilt.toFixed(2);
 
-                    read_X = jsonResponse.pan;
-                    read_Y = jsonResponse.tilt;
-                } else{
-                    document.getElementById("mX").innerHTML = "null";
-                    document.getElementById("mY").innerHTML = "null";
+                //     read_X = jsonResponse.pan;
+                //     read_Y = jsonResponse.tilt;
+                // } else{
+                //     document.getElementById("mX").innerHTML = "null";
+                //     document.getElementById("mY").innerHTML = "null";
 
-                    read_X = 0;
-                    read_Y = 0;
-                }
+                //     read_X = 0;
+                //     read_Y = 0;
+                // }
             }
         };
         xhttp.open("GET", "js?json=" + jsonString, true);

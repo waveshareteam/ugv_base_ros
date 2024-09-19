@@ -354,7 +354,7 @@ int IO5_CH = 8;
 
 const uint16_t FREQ = 200;
 
-int feedbackFlowExtraDelay = 0;
+int feedbackFlowExtraDelay = 50;
 bool uartCmdEcho = 0;
 
 #define GIMBAL_PAN_ID  2
@@ -399,6 +399,11 @@ double az_offset = 0;
 double accel_h = 0.01;
 
 double q0, q1, q2, q3, q2sqr, t0, t1, t2, t3, t4;
+
+double qc0 = 1.0;
+double qc1 = 0.0;
+double qc2 = 0.0;
+double qc3 = 0.0;
 
 float max_ax = 0;
 float min_ax = 0;

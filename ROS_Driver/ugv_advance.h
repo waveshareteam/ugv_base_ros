@@ -386,14 +386,14 @@ void baseInfoFeedback() {
 	jsonInfoHttp["L"] = speedGetA;
 	jsonInfoHttp["R"] = speedGetB;
 
-	jsonInfoHttp["r"] = icm_roll;
-	jsonInfoHttp["p"] = icm_pitch;
-	jsonInfoHttp["y"] = icm_yaw;
+	// jsonInfoHttp["r"] = icm_roll;
+	// jsonInfoHttp["p"] = icm_pitch;
+	// jsonInfoHttp["y"] = icm_yaw;
 
-	jsonInfoHttp["q0"] = q0;
-	jsonInfoHttp["q1"] = q1;
-	jsonInfoHttp["q2"] = q2;
-	jsonInfoHttp["q3"] = q3;
+	// jsonInfoHttp["q0"] = q0;
+	// jsonInfoHttp["q1"] = q1;
+	// jsonInfoHttp["q2"] = q2;
+	// jsonInfoHttp["q3"] = q3;
 
 	jsonInfoHttp["ax"] = ax;
 	jsonInfoHttp["ay"] = ay;
@@ -403,10 +403,18 @@ void baseInfoFeedback() {
 	jsonInfoHttp["gy"] = gy;
 	jsonInfoHttp["gz"] = gz;
 
-	jsonInfoHttp["odl"] = en_odom_l;
-	jsonInfoHttp["odr"] = en_odom_r;
+	jsonInfoHttp["mx"] = mx;
+	jsonInfoHttp["my"] = my;
+	jsonInfoHttp["mz"] = mz;
 
-	jsonInfoHttp["v"] = loadVoltage_V;
+	long int odl_cm = (en_odom_l * 100);
+	jsonInfoHttp["odl"] = odl_cm;
+
+	long int odr_cm = (en_odom_r * 100);
+	jsonInfoHttp["odr"] = odr_cm;
+
+    int v_int = (int)(loadVoltage_V * 100);
+	jsonInfoHttp["v"] = v_int;
 
 	switch(moduleType) {
 	case 1:
