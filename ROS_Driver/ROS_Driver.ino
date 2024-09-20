@@ -176,7 +176,7 @@ void setup() {
 
   init_oled();
   screenLine_0 = "ugv_base_ros.git";
-  screenLine_1 = "version: 0.93";
+  screenLine_1 = "version: 0.95";
   screenLine_2 = "starting...";
   screenLine_3 = "";
   oled_update();
